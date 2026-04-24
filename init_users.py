@@ -1,5 +1,5 @@
+# Dossier modules
 regimes = [("Normal",), ("Diabétique",)]
-
 for regime in regimes:
    from database import init_db, get_connection
 

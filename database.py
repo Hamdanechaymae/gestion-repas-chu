@@ -1,8 +1,12 @@
 import sqlite3
 
+
+# ================= CONNEXION =================
 def get_connection():
     return sqlite3.connect("gestion_repas.db", check_same_thread=False)
 
+
+# ================= INITIALISATION =================
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
@@ -20,14 +24,14 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS service (
         id_service INTEGER PRIMARY KEY AUTOINCREMENT,
-        nom_service TEXT UNIQUE
+        nom_service TEXT NOT NULL UNIQUE
     )
     """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS regime (
         id_regime INTEGER PRIMARY KEY AUTOINCREMENT,
-        nom_regime TEXT UNIQUE
+        nom_regime TEXT NOT NULL UNIQUE
     )
     """)
 
@@ -44,3 +48,235 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+# ================= SERVICES =================
+def ajouter_service(nom_service):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO service (nom_service) VALUES (?)",
+        (nom_service,)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_services():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_service, nom_service
+        FROM service
+        ORDER BY id_service DESC
+    """)
+    services = cursor.fetchall()
+    conn.close()
+    return services
+
+
+def supprimer_service(id_service):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM service WHERE id_service = ?",
+        (id_service,)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_services_dict():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_service, nom_service
+        FROM service
+        ORDER BY nom_service ASC
+    """)
+    data = cursor.fetchall()
+    conn.close()
+    return {nom: id_service for id_service, nom in data}
+
+
+# ================= RÉGIMES =================
+def ajouter_regime(nom_regime):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO regime (nom_regime) VALUES (?)",
+        (nom_regime,)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_regimes():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_regime, nom_regime
+        FROM regime
+        ORDER BY id_regime DESC
+    """)
+    regimes = cursor.fetchall()
+    conn.close()
+    return regimes
+
+
+def supprimer_regime(id_regime):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM regime WHERE id_regime = ?",
+        (id_regime,)
+    )
+    conn.commit()
+    conn.close()
+
+
+# ================= UTILISATEURS =================
+def ajouter_utilisateur(nom, email, mot_de_passe, role):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO utilisateur (nom, email, mot_de_passe, role)
+        VALUES (?, ?, ?, ?)
+    """, (nom, email, mot_de_passe, role))
+    conn.commit()
+    conn.close()
+
+
+def get_utilisateurs():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_user, nom, email, role
+        FROM utilisateur
+        ORDER BY id_user DESC
+    """)
+    users = cursor.fetchall()
+    conn.close()
+    return users
+
+
+def supprimer_utilisateur(id_user):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM utilisateur WHERE id_user = ?",
+        (id_user,)
+    )
+    conn.commit()
+    conn.close()
+
+
+# ================= BONS DE REPAS =================
+def ajouter_bon(date_bon, id_service, normal, diabetique):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO bon_repas (date_bon, id_service, normal, diabetique)
+        VALUES (?, ?, ?, ?)
+    """, (date_bon, id_service, normal, diabetique))
+    conn.commit()
+    conn.close()
+
+
+def get_bons():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT b.id_bon, b.date_bon, s.nom_service, b.normal, b.diabetique
+        FROM bon_repas b
+        JOIN service s ON b.id_service = s.id_service
+        ORDER BY b.date_bon DESC, b.id_bon DESC
+    """)
+    bons = cursor.fetchall()
+    conn.close()
+    return bons
+
+
+def modifier_bon(id_bon, date_bon, id_service, normal, diabetique):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE bon_repas
+        SET date_bon = ?, id_service = ?, normal = ?, diabetique = ?
+        WHERE id_bon = ?
+    """, (date_bon, id_service, normal, diabetique, id_bon))
+    conn.commit()
+    conn.close()
+
+
+def supprimer_bon(id_bon):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM bon_repas WHERE id_bon = ?",
+        (id_bon,)
+    )
+    conn.commit()
+    conn.close()
+
+
+# ================= STATISTIQUES SERVICE =================
+def get_stats_service():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM bon_repas")
+    total_bons = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(normal), 0), COALESCE(SUM(diabetique), 0)
+        FROM bon_repas
+    """)
+    total_normal, total_diabetique = cursor.fetchone()
+
+    conn.close()
+    return total_bons, total_normal, total_diabetique
+
+
+def get_derniers_bons(limit=5):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT b.date_bon, s.nom_service, b.normal, b.diabetique
+        FROM bon_repas b
+        JOIN service s ON b.id_service = s.id_service
+        ORDER BY b.id_bon DESC
+        LIMIT ?
+    """, (limit,))
+
+    bons = cursor.fetchall()
+    conn.close()
+    return bons
+
+
+# ================= STATISTIQUES ADMIN =================
+def get_stats_admin():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM service")
+    total_services = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM regime")
+    total_regimes = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM utilisateur")
+    total_users = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM bon_repas")
+    total_bons = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(normal), 0), COALESCE(SUM(diabetique), 0)
+        FROM bon_repas
+    """)
+    total_normal, total_diabetique = cursor.fetchone()
+
+    conn.close()
+    return total_services, total_regimes, total_users, total_bons, total_normal, total_diabetique

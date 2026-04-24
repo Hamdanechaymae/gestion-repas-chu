@@ -3,96 +3,142 @@ import streamlit as st
 def load_css():
     st.markdown("""
     <style>
-    /* Fond général */
+
+    /* Cacher la barre Streamlit */
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+
     .stApp {
-        background-color: #f6f8fc;
-    }
-
-    /* Titres */
-    h1, h2, h3 {
-        color: #1f2937;
-        font-weight: 700;
-    }
-
-    /* Texte */
-    html, body, [class*="css"] {
+        background: linear-gradient(135deg, #f5f9ff, #eef7ff);
         font-family: "Segoe UI", sans-serif;
+        color: #172033;
     }
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #e5e7eb;
+    .block-container {
+        padding-top: 1rem;
+        max-width: 1200px;
     }
 
-    /* Boutons */
-    .stButton > button {
-        width: 100%;
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 0.65rem 1rem;
+    /* Navbar */
+    .navbar-box {
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 18px 28px;
+        box-shadow: 0 8px 25px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 35px;
+    }
+
+    .brand-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #0f3b73;
+        margin-top: 8px;
+    }
+
+    .brand-subtitle {
+        font-size: 13px;
+        color: #64748b;
         font-weight: 600;
-        transition: 0.3s ease;
+    }
+
+    /* Boutons navbar */
+    .stButton > button {
+        background: transparent;
+        color: #0f3b73;
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 0.55rem 1.1rem;
+        box-shadow: none;
     }
 
     .stButton > button:hover {
-        background-color: #1d4ed8;
-        color: white;
+        background: #dbeafe;
+        color: #0f3b73;
     }
 
-    /* Inputs */
-    .stTextInput input, .stDateInput input, .stSelectbox div[data-baseweb="select"] {
-        border-radius: 10px !important;
+    /* Hero */
+    .hero {
+        background: linear-gradient(135deg, #ffffff 0%, #eaf4ff 55%, #e8f8f2 100%);
+        padding: 60px 50px;
+        border-radius: 30px;
+        box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 30px;
     }
 
-    /* Dataframe container */
-    div[data-testid="stDataFrame"] {
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        background-color: white;
+    .hero-badge {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        padding: 8px 15px;
+        border-radius: 999px;
+        font-weight: 800;
+        margin-bottom: 18px;
     }
 
-    /* Metric cards */
-    div[data-testid="metric-container"] {
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        padding: 18px;
-        border-radius: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    .hero h1 {
+        font-size: 48px;
+        line-height: 1.12;
+        color: #0f172a;
+        font-weight: 900;
+        margin-bottom: 18px;
     }
 
-    /* Alerts */
-    div[data-baseweb="notification"] {
-        border-radius: 12px;
+    .hero p {
+        font-size: 18px;
+        color: #475569;
+        line-height: 1.7;
+        max-width: 850px;
     }
 
-    /* Custom card */
     .custom-card {
         background: white;
-        padding: 1.2rem;
-        border-radius: 16px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        margin-bottom: 1rem;
-    }
-
-    /* Small subtitle */
-    .subtitle {
-        color: #6b7280;
-        font-size: 15px;
-        margin-top: -8px;
+        padding: 28px;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
         margin-bottom: 20px;
+        min-height: 155px;
     }
 
-    /* Section spacing */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
+    .custom-card h3 {
+        color: #0f3b73;
+        margin-bottom: 10px;
     }
+
+    .section-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #0f172a;
+        margin: 35px 0 18px 0;
+    }
+
+    .login-box {
+        background: white;
+        padding: 35px;
+        border-radius: 26px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+
+    input {
+        border-radius: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    div[data-baseweb="select"] > div {
+        border-radius: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: white;
+        border-right: 1px solid #e2e8f0;
+    }
+
     </style>
     """, unsafe_allow_html=True)

@@ -280,3 +280,37 @@ def get_stats_admin():
 
     conn.close()
     return total_services, total_regimes, total_users, total_bons, total_normal, total_diabetique
+    # ================= CUISINE =================
+
+def get_bons_par_date(date_bon):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT b.id_bon, b.date_bon, s.nom_service, b.normal, b.diabetique
+        FROM bon_repas b
+        JOIN service s ON b.id_service = s.id_service
+        WHERE b.date_bon = ?
+        ORDER BY s.nom_service ASC
+    """, (date_bon,))
+
+    bons = cursor.fetchall()
+    conn.close()
+    return bons
+
+
+def get_stats_cuisine():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM bon_repas")
+    total_bons = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(normal), 0), COALESCE(SUM(diabetique), 0)
+        FROM bon_repas
+    """)
+    total_normal, total_diabetique = cursor.fetchone()
+
+    conn.close()
+    return total_bons, total_normal, total_diabetique

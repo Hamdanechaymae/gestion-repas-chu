@@ -26,15 +26,28 @@ def logout():
     st.session_state["user"] = None
     st.session_state["page"] = "home"
     st.rerun()
+    st.markdown("""
+<div class="navbar">
+    <div class="brand">
+        <img src="assets/chu.png">
+        <div>
+            <div class="brand-title">CHU Repas</div>
+            <div class="brand-sub">Gestion hospitalière des bons de repas</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 def navbar():
     st.markdown('<div class="navbar-box">', unsafe_allow_html=True)
 
-    nav_logo, nav_brand, nav1, nav2, nav3, nav4 = st.columns([0.7, 3, 1, 1, 1, 1.3])
+    nav_logo, nav_brand, nav1, nav2, nav3, nav4 = st.columns([0.7, 2, 1, 1, 1, 1])
 
     with nav_logo:
-        logo_path = os.path.join(os.path.dirname(__file__), "logo_chu.png")
+        import os
+        logo_path = os.path.join(os.path.dirname(__file__), "assets", "chu.jpg")
+
         if os.path.exists(logo_path):
             st.image(logo_path, width=60)
         else:
@@ -42,24 +55,24 @@ def navbar():
 
     with nav_brand:
         st.markdown("""
-        <div class="brand-title">CHU Repas</div>
-        <div class="brand-subtitle">Gestion hospitalière des bons de repas</div>
+            <div class="brand-title">CHU Repas</div>
+            <div class="brand-subtitle">Gestion hospitalière des bons de repas</div>
         """, unsafe_allow_html=True)
 
     with nav1:
-        if st.button("Accueil", key="btn_accueil"):
+        if st.button("Accueil"):
             st.session_state["page"] = "home"
 
     with nav2:
-        if st.button("À propos", key="btn_about"):
+        if st.button("À propos"):
             st.session_state["page"] = "about"
 
     with nav3:
-        if st.button("Contact", key="btn_contact"):
+        if st.button("Contact"):
             st.session_state["page"] = "contact"
 
     with nav4:
-        if st.button("Connexion", key="btn_login"):
+        if st.button("Connexion"):
             st.session_state["page"] = "login"
 
     st.markdown('</div>', unsafe_allow_html=True)

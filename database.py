@@ -36,13 +36,25 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chambre (
+        id_chambre INTEGER PRIMARY KEY AUTOINCREMENT,
+        numero_chambre TEXT NOT NULL,
+        id_service INTEGER NOT NULL,
+        FOREIGN KEY (id_service) REFERENCES service(id_service),
+        UNIQUE(numero_chambre, id_service)
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS bon_repas (
         id_bon INTEGER PRIMARY KEY AUTOINCREMENT,
         date_bon TEXT NOT NULL,
         id_service INTEGER NOT NULL,
+        id_chambre INTEGER,
         normal INTEGER NOT NULL,
         diabetique INTEGER NOT NULL,
-        FOREIGN KEY (id_service) REFERENCES service(id_service)
+        FOREIGN KEY (id_service) REFERENCES service(id_service),
+        FOREIGN KEY (id_chambre) REFERENCES chambre(id_chambre)
     )
     """)
 
@@ -54,10 +66,7 @@ def init_db():
 def ajouter_service(nom_service):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO service (nom_service) VALUES (?)",
-        (nom_service,)
-    )
+    cursor.execute("INSERT INTO service (nom_service) VALUES (?)", (nom_service,))
     conn.commit()
     conn.close()
 
@@ -78,10 +87,7 @@ def get_services():
 def supprimer_service(id_service):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM service WHERE id_service = ?",
-        (id_service,)
-    )
+    cursor.execute("DELETE FROM service WHERE id_service = ?", (id_service,))
     conn.commit()
     conn.close()
 
@@ -99,14 +105,82 @@ def get_services_dict():
     return {nom: id_service for id_service, nom in data}
 
 
+# ================= CHAMBRES =================
+def ajouter_chambre(numero_chambre, id_service):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM chambre
+        WHERE numero_chambre = ? AND id_service = ?
+    """, (numero_chambre, id_service))
+
+    existe = cursor.fetchone()[0]
+
+    if existe > 0:
+        conn.close()
+        raise Exception("Cette chambre existe déjà dans ce service.")
+
+    cursor.execute("""
+        INSERT INTO chambre (numero_chambre, id_service)
+        VALUES (?, ?)
+    """, (numero_chambre, id_service))
+
+    conn.commit()
+    conn.close()
+
+
+def get_chambres():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT c.id_chambre, c.numero_chambre, s.nom_service
+        FROM chambre c
+        JOIN service s ON c.id_service = s.id_service
+        ORDER BY s.nom_service ASC, c.numero_chambre ASC
+    """)
+    chambres = cursor.fetchall()
+    conn.close()
+    return chambres
+
+
+def get_chambres_by_service(id_service):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_chambre, numero_chambre
+        FROM chambre
+        WHERE id_service = ?
+        ORDER BY numero_chambre ASC
+    """, (id_service,))
+    chambres = cursor.fetchall()
+    conn.close()
+    return chambres
+
+
+def supprimer_chambre(id_chambre):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM chambre WHERE id_chambre = ?", (id_chambre,))
+    conn.commit()
+    conn.close()
+
+
+def count_chambres():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM chambre")
+    total = cursor.fetchone()[0]
+    conn.close()
+    return total
+
+
 # ================= RÉGIMES =================
 def ajouter_regime(nom_regime):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO regime (nom_regime) VALUES (?)",
-        (nom_regime,)
-    )
+    cursor.execute("INSERT INTO regime (nom_regime) VALUES (?)", (nom_regime,))
     conn.commit()
     conn.close()
 
@@ -127,10 +201,7 @@ def get_regimes():
 def supprimer_regime(id_regime):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM regime WHERE id_regime = ?",
-        (id_regime,)
-    )
+    cursor.execute("DELETE FROM regime WHERE id_regime = ?", (id_regime,))
     conn.commit()
     conn.close()
 
@@ -163,22 +234,19 @@ def get_utilisateurs():
 def supprimer_utilisateur(id_user):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM utilisateur WHERE id_user = ?",
-        (id_user,)
-    )
+    cursor.execute("DELETE FROM utilisateur WHERE id_user = ?", (id_user,))
     conn.commit()
     conn.close()
 
 
 # ================= BONS DE REPAS =================
-def ajouter_bon(date_bon, id_service, normal, diabetique):
+def ajouter_bon(date_bon, id_service, id_chambre, normal, diabetique):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO bon_repas (date_bon, id_service, normal, diabetique)
-        VALUES (?, ?, ?, ?)
-    """, (date_bon, id_service, normal, diabetique))
+        INSERT INTO bon_repas (date_bon, id_service, id_chambre, normal, diabetique)
+        VALUES (?, ?, ?, ?, ?)
+    """, (date_bon, id_service, id_chambre, normal, diabetique))
     conn.commit()
     conn.close()
 
@@ -187,9 +255,10 @@ def get_bons():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT b.id_bon, b.date_bon, s.nom_service, b.normal, b.diabetique
+        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
+        LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
         ORDER BY b.date_bon DESC, b.id_bon DESC
     """)
     bons = cursor.fetchall()
@@ -197,14 +266,14 @@ def get_bons():
     return bons
 
 
-def modifier_bon(id_bon, date_bon, id_service, normal, diabetique):
+def modifier_bon(id_bon, date_bon, id_service, id_chambre, normal, diabetique):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE bon_repas
-        SET date_bon = ?, id_service = ?, normal = ?, diabetique = ?
+        SET date_bon = ?, id_service = ?, id_chambre = ?, normal = ?, diabetique = ?
         WHERE id_bon = ?
-    """, (date_bon, id_service, normal, diabetique, id_bon))
+    """, (date_bon, id_service, id_chambre, normal, diabetique, id_bon))
     conn.commit()
     conn.close()
 
@@ -212,10 +281,7 @@ def modifier_bon(id_bon, date_bon, id_service, normal, diabetique):
 def supprimer_bon(id_bon):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM bon_repas WHERE id_bon = ?",
-        (id_bon,)
-    )
+    cursor.execute("DELETE FROM bon_repas WHERE id_bon = ?", (id_bon,))
     conn.commit()
     conn.close()
 
@@ -243,9 +309,10 @@ def get_derniers_bons(limit=5):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT b.date_bon, s.nom_service, b.normal, b.diabetique
+        SELECT b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
+        LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
         ORDER BY b.id_bon DESC
         LIMIT ?
     """, (limit,))
@@ -269,6 +336,9 @@ def get_stats_admin():
     cursor.execute("SELECT COUNT(*) FROM utilisateur")
     total_users = cursor.fetchone()[0]
 
+    cursor.execute("SELECT COUNT(*) FROM chambre")
+    total_chambres = cursor.fetchone()[0]
+
     cursor.execute("SELECT COUNT(*) FROM bon_repas")
     total_bons = cursor.fetchone()[0]
 
@@ -279,19 +349,21 @@ def get_stats_admin():
     total_normal, total_diabetique = cursor.fetchone()
 
     conn.close()
-    return total_services, total_regimes, total_users, total_bons, total_normal, total_diabetique
-    # ================= CUISINE =================
+    return total_services, total_regimes, total_users, total_chambres, total_bons, total_normal, total_diabetique
 
+
+# ================= CUISINE =================
 def get_bons_par_date(date_bon):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT b.id_bon, b.date_bon, s.nom_service, b.normal, b.diabetique
+        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
+        LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
         WHERE b.date_bon = ?
-        ORDER BY s.nom_service ASC
+        ORDER BY s.nom_service ASC, c.numero_chambre ASC
     """, (date_bon,))
 
     bons = cursor.fetchall()

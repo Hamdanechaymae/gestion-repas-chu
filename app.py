@@ -6,15 +6,24 @@ from auth import verifier_connexion
 from modules.admin import admin_page
 from modules.service import service_page
 from modules.cuisine import cuisine_page
+from database import init_db
 
+
+# ================= CONFIG =================
 st.set_page_config(
     page_title="CHU Repas",
     page_icon="🏥",
     layout="wide"
 )
 
+# INIT DB
+init_db()
+
+# CSS
 load_css()
 
+
+# ================= SESSION =================
 if "user" not in st.session_state:
     st.session_state["user"] = None
 
@@ -22,30 +31,20 @@ if "page" not in st.session_state:
     st.session_state["page"] = "home"
 
 
+# ================= LOGOUT =================
 def logout():
     st.session_state["user"] = None
     st.session_state["page"] = "home"
     st.rerun()
-    st.markdown("""
-<div class="navbar">
-    <div class="brand">
-        <img src="assets/chu.png">
-        <div>
-            <div class="brand-title">CHU Repas</div>
-            <div class="brand-sub">Gestion hospitalière des bons de repas</div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
 
 
+# ================= NAVBAR =================
 def navbar():
     st.markdown('<div class="navbar-box">', unsafe_allow_html=True)
 
-    nav_logo, nav_brand, nav1, nav2, nav3, nav4 = st.columns([0.7, 2, 1, 1, 1, 1])
+    col_logo, col_brand, col1, col2, col3, col4 = st.columns([0.7, 2, 1, 1, 1, 1])
 
-    with nav_logo:
-        import os
+    with col_logo:
         logo_path = os.path.join(os.path.dirname(__file__), "assets", "chu.jpg")
 
         if os.path.exists(logo_path):
@@ -53,114 +52,101 @@ def navbar():
         else:
             st.markdown("<h2>🏥</h2>", unsafe_allow_html=True)
 
-    with nav_brand:
+    with col_brand:
         st.markdown("""
-            <div class="brand-title">CHU Repas</div>
-            <div class="brand-subtitle">Gestion hospitalière des bons de repas</div>
+        <div class="brand-title">CHU Repas</div>
+        <div class="brand-subtitle">Gestion hospitalière des bons de repas</div>
         """, unsafe_allow_html=True)
 
-    with nav1:
-        if st.button("Accueil"):
+    with col1:
+        if st.button("Accueil", key="nav_home"):
             st.session_state["page"] = "home"
+            st.rerun()
 
-    with nav2:
-        if st.button("À propos"):
+    with col2:
+        if st.button("À propos", key="nav_about"):
             st.session_state["page"] = "about"
+            st.rerun()
 
-    with nav3:
-        if st.button("Contact"):
+    with col3:
+        if st.button("Contact", key="nav_contact"):
             st.session_state["page"] = "contact"
+            st.rerun()
 
-    with nav4:
-        if st.button("Connexion"):
+    with col4:
+        if st.button("Connexion", key="nav_login"):
             st.session_state["page"] = "login"
+            st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+# ================= ACCUEIL =================
 def page_accueil():
     st.markdown("""
     <div class="hero">
-        <div class="hero-badge">Solution numérique pour le CHU Oujda</div>
-        <h1>Modernisation de la gestion des bons de repas hospitaliers</h1>
+        <div class="hero-badge">🚀 Application intelligente</div>
+        <h1>CHU Repas</h1>
         <p>
-            Une application web professionnelle conçue pour organiser les services,
-            les régimes, les utilisateurs et les bons de repas afin d’améliorer
-            le suivi, la précision et la coordination avec la cuisine hospitalière.
+            Plateforme moderne de gestion des bons de repas hospitaliers.<br>
+            Rapide • Fiable • Professionnelle
         </p>
     </div>
     """, unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        st.markdown("""
-        <div class="custom-card">
-            <h3>🏥 Services</h3>
-            <p>Organisation des services hospitaliers.</p>
-        </div>
-        """, unsafe_allow_html=True)
+    cards = [
+        ("🏥 Services", "Organisation des services hospitaliers."),
+        ("🥗 Régimes", "Gestion des régimes alimentaires."),
+        ("📝 Bons", "Création et suivi des bons de repas."),
+        ("📊 Totaux", "Analyse des repas pour la cuisine.")
+    ]
 
-    with col2:
-        st.markdown("""
-        <div class="custom-card">
-            <h3>🥗 Régimes</h3>
-            <p>Gestion des régimes alimentaires.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown("""
-        <div class="custom-card">
-            <h3>📝 Bons</h3>
-            <p>Création et suivi des bons de repas.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        st.markdown("""
-        <div class="custom-card">
-            <h3>📊 Totaux</h3>
-            <p>Affichage des totaux pour la cuisine.</p>
-        </div>
-        """, unsafe_allow_html=True)
+    for col, (title, desc) in zip([col1, col2, col3, col4], cards):
+        with col:
+            st.markdown(f"""
+            <div class="custom-card">
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
 
+# ================= ABOUT =================
 def page_about():
     st.markdown("""
     <div class="hero">
         <div class="hero-badge">À propos</div>
-        <h1>Une application pensée pour le contexte hospitalier</h1>
+        <h1>Application de gestion hospitalière</h1>
         <p>
-            Cette application facilite la gestion quotidienne des bons de repas
-            au sein du CHU Oujda. Elle permet à chaque utilisateur d’accéder
-            aux fonctionnalités adaptées à son rôle.
+            CHU Repas est une application web conçue pour faciliter la gestion
+            des bons de repas au sein d’un établissement hospitalier.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
 
+# ================= CONTACT =================
 def page_contact():
     st.markdown("""
     <div class="custom-card">
         <h1>Contact</h1>
-        <p><b>Établissement :</b> CHU Oujda</p>
-        <p><b>Encadrante :</b> Madame Khadija Himri</p>
-        <p><b>Réalisé par :</b> Chaymae Hamdane et Wiame Jaouher</p>
+        <p><b>CHU :</b> Oujda</p>
+        <p><b>Encadrante :</b> Mme Khadija Himri</p>
+        <p><b>Réalisé par :</b> Chaymae Hamdane & Wiame Jaouher</p>
         <p><b>Projet :</b> Gestion des bons de repas hospitaliers</p>
     </div>
     """, unsafe_allow_html=True)
 
 
+# ================= LOGIN =================
 def page_login():
     st.markdown("""
     <div class="hero">
         <div class="hero-badge">Accès sécurisé</div>
-        <h1>Connexion à l’espace utilisateur</h1>
-        <p>
-            Chaque utilisateur accède uniquement aux fonctionnalités correspondant
-            à son rôle.
-        </p>
+        <h1>Connexion</h1>
+        <p>Accédez à votre espace selon votre rôle.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -171,12 +157,12 @@ def page_login():
 
         email = st.text_input("Email")
         password = st.text_input("Mot de passe", type="password")
-        role_choisi = st.selectbox("Rôle", ["admin", "service", "cuisine"])
+        role = st.selectbox("Rôle", ["admin", "service", "cuisine"])
 
-        if st.button("Se connecter", key="btn_se_connecter"):
+        if st.button("Se connecter", key="btn_login"):
             user = verifier_connexion(email, password)
 
-            if user and user[3] == role_choisi:
+            if user and user[3] == role:
                 st.session_state["user"] = {
                     "id": user[0],
                     "nom": user[1],
@@ -190,13 +176,14 @@ def page_login():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
+# ================= DASHBOARD =================
 def dashboard():
     user = st.session_state["user"]
 
-    st.sidebar.success(f"Connecté : {user['nom']}")
+    st.sidebar.success(f"👤 Connecté : {user['nom']}")
     st.sidebar.write(f"Rôle : {user['role']}")
 
-    if st.sidebar.button("Déconnexion", key="btn_deconnexion"):
+    if st.sidebar.button("🚪 Déconnexion", key="btn_logout"):
         logout()
 
     if user["role"] == "admin":
@@ -209,16 +196,23 @@ def dashboard():
         cuisine_page()
 
 
+# ================= ROUTING =================
 if st.session_state["user"] is None:
     navbar()
 
-    if st.session_state["page"] == "home":
+    page = st.session_state["page"]
+
+    if page == "home":
         page_accueil()
-    elif st.session_state["page"] == "about":
+
+    elif page == "about":
         page_about()
-    elif st.session_state["page"] == "contact":
+
+    elif page == "contact":
         page_contact()
-    elif st.session_state["page"] == "login":
+
+    elif page == "login":
         page_login()
+
 else:
     dashboard()

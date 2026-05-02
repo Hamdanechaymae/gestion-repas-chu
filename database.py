@@ -1,12 +1,11 @@
 import sqlite3
+from datetime import datetime
 
 
-# ================= CONNEXION =================
 def get_connection():
     return sqlite3.connect("gestion_repas.db", check_same_thread=False)
 
 
-# ================= INITIALISATION =================
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
@@ -53,13 +52,54 @@ def init_db():
         id_chambre INTEGER,
         normal INTEGER NOT NULL,
         diabetique INTEGER NOT NULL,
+        statut TEXT DEFAULT 'En attente',
+        heure_creation TEXT,
         FOREIGN KEY (id_service) REFERENCES service(id_service),
-        FOREIGN KEY (id_chambre) REFERENCES chambre(id_chambre)
+        FOREIGN KEY (id_chambre) REFERENCES chambre(id_chambre),
+        UNIQUE(date_bon, id_service, id_chambre)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS historique (
+        id_historique INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL,
+        description TEXT NOT NULL,
+        date_action TEXT NOT NULL
     )
     """)
 
     conn.commit()
     conn.close()
+
+
+# ================= HISTORIQUE =================
+def ajouter_historique(action, description):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO historique (action, description, date_action)
+        VALUES (?, ?, ?)
+    """, (action, description, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+    conn.commit()
+    conn.close()
+
+
+def get_historique():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id_historique, action, description, date_action
+        FROM historique
+        ORDER BY id_historique DESC
+    """)
+
+    data = cursor.fetchall()
+    conn.close()
+    return data
 
 
 # ================= SERVICES =================
@@ -69,6 +109,7 @@ def ajouter_service(nom_service):
     cursor.execute("INSERT INTO service (nom_service) VALUES (?)", (nom_service,))
     conn.commit()
     conn.close()
+    ajouter_historique("Ajout", f"Service ajouté : {nom_service}")
 
 
 def get_services():
@@ -90,6 +131,7 @@ def supprimer_service(id_service):
     cursor.execute("DELETE FROM service WHERE id_service = ?", (id_service,))
     conn.commit()
     conn.close()
+    ajouter_historique("Suppression", f"Service supprimé ID : {id_service}")
 
 
 def get_services_dict():
@@ -129,6 +171,7 @@ def ajouter_chambre(numero_chambre, id_service):
 
     conn.commit()
     conn.close()
+    ajouter_historique("Ajout", f"Chambre {numero_chambre} ajoutée")
 
 
 def get_chambres():
@@ -165,6 +208,7 @@ def supprimer_chambre(id_chambre):
     cursor.execute("DELETE FROM chambre WHERE id_chambre = ?", (id_chambre,))
     conn.commit()
     conn.close()
+    ajouter_historique("Suppression", f"Chambre supprimée ID : {id_chambre}")
 
 
 def count_chambres():
@@ -183,6 +227,7 @@ def ajouter_regime(nom_regime):
     cursor.execute("INSERT INTO regime (nom_regime) VALUES (?)", (nom_regime,))
     conn.commit()
     conn.close()
+    ajouter_historique("Ajout", f"Régime ajouté : {nom_regime}")
 
 
 def get_regimes():
@@ -204,6 +249,7 @@ def supprimer_regime(id_regime):
     cursor.execute("DELETE FROM regime WHERE id_regime = ?", (id_regime,))
     conn.commit()
     conn.close()
+    ajouter_historique("Suppression", f"Régime supprimé ID : {id_regime}")
 
 
 # ================= UTILISATEURS =================
@@ -216,6 +262,7 @@ def ajouter_utilisateur(nom, email, mot_de_passe, role):
     """, (nom, email, mot_de_passe, role))
     conn.commit()
     conn.close()
+    ajouter_historique("Ajout", f"Utilisateur ajouté : {email}")
 
 
 def get_utilisateurs():
@@ -237,25 +284,58 @@ def supprimer_utilisateur(id_user):
     cursor.execute("DELETE FROM utilisateur WHERE id_user = ?", (id_user,))
     conn.commit()
     conn.close()
+    ajouter_historique("Suppression", f"Utilisateur supprimé ID : {id_user}")
 
 
 # ================= BONS DE REPAS =================
-def ajouter_bon(date_bon, id_service, id_chambre, normal, diabetique):
+def verifier_bon_existe(date_bon, id_service, id_chambre):
     conn = get_connection()
     cursor = conn.cursor()
+
     cursor.execute("""
-        INSERT INTO bon_repas (date_bon, id_service, id_chambre, normal, diabetique)
-        VALUES (?, ?, ?, ?, ?)
-    """, (date_bon, id_service, id_chambre, normal, diabetique))
+        SELECT COUNT(*)
+        FROM bon_repas
+        WHERE date_bon = ? AND id_service = ? AND id_chambre = ?
+    """, (date_bon, id_service, id_chambre))
+
+    existe = cursor.fetchone()[0]
+    conn.close()
+    return existe > 0
+
+
+def ajouter_bon(date_bon, id_service, id_chambre, normal, diabetique):
+    if verifier_bon_existe(date_bon, id_service, id_chambre):
+        raise Exception("Un bon existe déjà pour cette chambre à cette date.")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO bon_repas (
+            date_bon, id_service, id_chambre, normal, diabetique, statut, heure_creation
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        date_bon,
+        id_service,
+        id_chambre,
+        normal,
+        diabetique,
+        "En attente",
+        datetime.now().strftime("%H:%M:%S")
+    ))
+
     conn.commit()
     conn.close()
+    ajouter_historique("Ajout", f"Bon ajouté pour la chambre ID {id_chambre} le {date_bon}")
 
 
 def get_bons():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
+        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre,
+               b.normal, b.diabetique, b.statut
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
         LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
@@ -276,6 +356,22 @@ def modifier_bon(id_bon, date_bon, id_service, id_chambre, normal, diabetique):
     """, (date_bon, id_service, id_chambre, normal, diabetique, id_bon))
     conn.commit()
     conn.close()
+    ajouter_historique("Modification", f"Bon modifié ID : {id_bon}")
+
+
+def modifier_statut_bon(id_bon, statut):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE bon_repas
+        SET statut = ?
+        WHERE id_bon = ?
+    """, (statut, id_bon))
+
+    conn.commit()
+    conn.close()
+    ajouter_historique("Statut", f"Bon ID {id_bon} changé en : {statut}")
 
 
 def supprimer_bon(id_bon):
@@ -284,6 +380,7 @@ def supprimer_bon(id_bon):
     cursor.execute("DELETE FROM bon_repas WHERE id_bon = ?", (id_bon,))
     conn.commit()
     conn.close()
+    ajouter_historique("Suppression", f"Bon supprimé ID : {id_bon}")
 
 
 # ================= STATISTIQUES SERVICE =================
@@ -309,7 +406,8 @@ def get_derniers_bons(limit=5):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
+        SELECT b.date_bon, s.nom_service, c.numero_chambre,
+               b.normal, b.diabetique, b.statut
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
         LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
@@ -358,7 +456,8 @@ def get_bons_par_date(date_bon):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre, b.normal, b.diabetique
+        SELECT b.id_bon, b.date_bon, s.nom_service, c.numero_chambre,
+               b.normal, b.diabetique, b.statut
         FROM bon_repas b
         JOIN service s ON b.id_service = s.id_service
         LEFT JOIN chambre c ON b.id_chambre = c.id_chambre
@@ -369,6 +468,27 @@ def get_bons_par_date(date_bon):
     bons = cursor.fetchall()
     conn.close()
     return bons
+
+
+def get_totaux_par_service(date_bon):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT s.nom_service,
+               COALESCE(SUM(b.normal), 0) AS total_normal,
+               COALESCE(SUM(b.diabetique), 0) AS total_diabetique,
+               COALESCE(SUM(b.normal + b.diabetique), 0) AS total_general
+        FROM bon_repas b
+        JOIN service s ON b.id_service = s.id_service
+        WHERE b.date_bon = ?
+        GROUP BY s.nom_service
+        ORDER BY s.nom_service ASC
+    """, (date_bon,))
+
+    data = cursor.fetchall()
+    conn.close()
+    return data
 
 
 def get_stats_cuisine():

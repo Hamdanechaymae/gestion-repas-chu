@@ -85,11 +85,11 @@ def navbar():
 def page_accueil():
     st.markdown("""
     <div class="hero">
-        <div class="hero-badge">🚀 Application intelligente</div>
         <h1>CHU Repas</h1>
         <p>
-            Plateforme moderne de gestion des bons de repas hospitaliers.<br>
-            Rapide • Fiable • Professionnelle
+            Application web dédiée à la gestion des bons de repas hospitaliers.
+            Elle permet d’améliorer l’organisation entre les services hospitaliers,
+            les chambres et la cuisine centrale.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -97,10 +97,10 @@ def page_accueil():
     col1, col2, col3, col4 = st.columns(4)
 
     cards = [
-        ("🏥 Services", "Organisation des services hospitaliers."),
-        ("🥗 Régimes", "Gestion des régimes alimentaires."),
-        ("📝 Bons", "Création et suivi des bons de repas."),
-        ("📊 Totaux", "Analyse des repas pour la cuisine.")
+        ("🏥 Services", "Gestion et organisation des services hospitaliers."),
+        ("🛏️ Chambres", "Association des chambres aux services concernés."),
+        ("📝 Bons de repas", "Création, suivi et modification des bons de repas."),
+        ("🍽️ Cuisine", "Consultation des totaux et préparation des repas.")
     ]
 
     for col, (title, desc) in zip([col1, col2, col3, col4], cards):
@@ -111,7 +111,6 @@ def page_accueil():
                 <p>{desc}</p>
             </div>
             """, unsafe_allow_html=True)
-
 
 # ================= ABOUT =================
 def page_about():

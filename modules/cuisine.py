@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
+
 from database import (
     get_bons,
     get_bons_par_date,
@@ -13,11 +14,32 @@ from database import (
 
 # ================= DASHBOARD =================
 def dashboard_cuisine():
-    st.title("🍽️ Dashboard Cuisine")
+    st.title("Dashboard Cuisine")
 
+    # ✅ D’ABORD les données
     total_bons, total_normal, total_diabetique = get_stats_cuisine()
     total_general = total_normal + total_diabetique
-    
+
+    # ✅ ENSUITE les alertes
+    if total_bons == 0:
+        st.warning("⚠️ Aucun bon de repas reçu pour le moment.")
+        
+    elif total_general == 0:
+        st.warning("⚠️ Aucun repas enregistré.")
+
+    else:
+        taux_diabetique = (total_diabetique / total_general) * 100
+
+        if taux_diabetique >= 50:
+            st.error("🚨 Attention : trop de repas diabétiques !")
+
+        elif taux_diabetique >= 30:
+            st.warning("⚠️ Les repas diabétiques sont élevés.")
+
+        else:
+            st.success("✅ Situation normale : répartition équilibrée.")
+
+    # metrics
     col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("📄 Bons reçus", total_bons)
@@ -33,7 +55,7 @@ def dashboard_cuisine():
         "Total": [total_normal, total_diabetique]
     })
 
-    st.subheader("📊 Répartition des repas")
+    st.subheader("📊 Répartition des repas par type")
     st.bar_chart(df_chart.set_index("Type"))
 
 

@@ -36,6 +36,8 @@ def dashboard_cuisine():
         st.warning("Aucun bon de repas reçu pour le moment.")
     elif total_general == 0:
         st.warning("Aucun repas enregistré.")
+    elif total_general < 10:
+        st.info("Volume actuel faible : la répartition des repas n'est pas encore significative.")
     else:
         taux_diabetique = (total_diabetique / total_general) * 100
 

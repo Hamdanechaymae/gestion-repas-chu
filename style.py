@@ -1,6 +1,5 @@
 import streamlit as st
 
-
 def load_css():
     st.markdown(
         """
@@ -8,107 +7,102 @@ def load_css():
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         :root {
-            --bg: #f7f9fc;
-            --surface: #ffffff;
-            --surface-alt: #f9fbfd;
-            --border: #dce3ea;
-            --border-strong: #c8d2dc;
-            --text: #1f2937;
-            --muted: #667085;
-            --primary: #0f6cbd;
-            --primary-hover: #0b5aa0;
-            --success: #1f845a;
-            --warning: #b54708;
-            --danger: #b42318;
-            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
-            --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.06);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
+            --bg: #F1F5F9;
+            --surface: #FFFFFF;
+            --border: #CBD5E1;
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            --primary: #0F4C81;
+            --primary-dark: #0A3A62;
+            --primary-light: #DBEAFE;
+            --primary-50: #EFF6FF;
+            --success: #047857;
+            --warning: #B45309;
+            --danger: #B91C1C;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.04);
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
         }
 
         html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .stApp {
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .block-container {
-            padding-top: 1.5rem;
-            padding-bottom: 2rem;
-        }
-
-        h1, h2, h3, h4 {
-            color: var(--text);
-            letter-spacing: 0;
-        }
-
-        p, label, span, div {
-            color: var(--text);
-        }
-
-        small {
-            color: var(--muted);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-size: 14px;
         }
 
         .navbar-box {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            padding: 0.9rem 1.1rem;
+            padding: 0.6rem 1.25rem;
             margin-bottom: 1.25rem;
             box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
         }
 
         .brand-title {
             font-size: 1.15rem;
             font-weight: 700;
-            color: var(--text);
-            line-height: 1.2;
-            margin-top: 0.15rem;
+            color: var(--primary-dark);
+            letter-spacing: -0.01em;
         }
 
         .brand-subtitle {
-            font-size: 0.88rem;
-            color: var(--muted);
-            margin-top: 0.15rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.04em;
         }
 
         .hero {
-            background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
-            border: 1px solid var(--border);
+            background: var(--primary);
             border-radius: var(--radius-lg);
-            padding: 1.6rem 1.6rem 1.4rem 1.6rem;
+            padding: 1.75rem 1.5rem;
             margin-bottom: 1.25rem;
-            box-shadow: var(--shadow-sm);
+            color: white;
         }
 
         .hero h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.55rem;
+            color: #FFFFFF !important;
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
         }
 
         .hero p {
-            font-size: 0.98rem;
-            color: var(--muted);
-            max-width: 900px;
-            line-height: 1.65;
-            margin-bottom: 0;
+            color: rgba(255,255,255,0.8) !important;
+            font-size: 0.85rem;
+            line-height: 1.5;
         }
 
         .hero-badge {
             display: inline-block;
-            background: #eaf3fb;
-            color: var(--primary);
-            border: 1px solid #cfe3f6;
-            border-radius: 999px;
-            padding: 0.22rem 0.7rem;
-            font-size: 0.78rem;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #FFFFFF;
+            border-radius: 3px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.65rem;
             font-weight: 600;
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.15rem;
+        }
+        
+        .section-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             margin-bottom: 0.75rem;
         }
 
@@ -116,167 +110,161 @@ def load_css():
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            padding: 1.1rem 1rem;
-            min-height: 150px;
+            padding: 1.25rem;
+            height: 100%;
             box-shadow: var(--shadow-sm);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .custom-card:hover {
-            border-color: var(--border-strong);
-            box-shadow: var(--shadow-md);
         }
 
         .custom-card h3 {
-            font-size: 1rem;
+            color: var(--primary-dark);
+            font-size: 0.95rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
-
+        
         .custom-card p {
-            font-size: 0.92rem;
-            color: var(--muted);
-            line-height: 1.55;
-            margin-bottom: 0;
-        }
-
-        .stTextInput > div > div > input,
-        .stTextArea textarea,
-        .stDateInput input,
-        .stNumberInput input {
-            background: var(--surface) !important;
-            border: 1px solid var(--border) !important;
-            border-radius: var(--radius-sm) !important;
-            color: var(--text) !important;
-        }
-
-        .stTextInput > div > div > input:focus,
-        .stTextArea textarea:focus,
-        .stDateInput input:focus,
-        .stNumberInput input:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(15, 108, 189, 0.12) !important;
-        }
-
-        div[data-baseweb="select"] > div {
-            background: var(--surface) !important;
-            border: 1px solid var(--border) !important;
-            border-radius: var(--radius-sm) !important;
-            min-height: 42px;
-        }
-
-        .stButton > button {
-            background: var(--primary);
-            color: #ffffff;
-            border: 1px solid var(--primary);
-            border-radius: var(--radius-sm) !important;
-            padding: 0.6rem 1rem;
-            font-weight: 600;
-            box-shadow: none;
-            transition: background 0.2s ease, border-color 0.2s ease;
-        }
-
-        .stButton > button:hover {
-            background: var(--primary-hover);
-            border-color: var(--primary-hover);
-            color: #ffffff;
-        }
-
-        .stButton > button:focus {
-            box-shadow: 0 0 0 3px rgba(15, 108, 189, 0.15) !important;
-        }
-
-        section[data-testid="stSidebar"] {
-            background: #f3f6f9;
-            border-right: 1px solid var(--border);
-        }
-
-        section[data-testid="stSidebar"] * {
-            color: var(--text);
-        }
-
-        section[data-testid="stSidebar"] .stRadio > div {
-            gap: 0.35rem;
-        }
-
-        div[role="radiogroup"] label {
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: var(--radius-sm);
-            padding: 0.45rem 0.5rem;
-            transition: background 0.15s ease, border-color 0.15s ease;
-        }
-
-        div[role="radiogroup"] label:hover {
-            background: #eaf3fb;
-            border-color: #cfe3f6;
-        }
-
-        [data-testid="stMetric"] {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 0.9rem 1rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        [data-testid="stMetricLabel"] {
-            color: var(--muted);
-            font-weight: 600;
-        }
-
-        [data-testid="stMetricValue"] {
-            color: var(--text);
-            font-weight: 700;
-        }
-
-        [data-testid="stDataFrame"] {
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            background: var(--surface);
-        }
-
-        [data-testid="stAlert"] {
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 1.2rem 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin: 0;
         }
 
         .login-box {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.4rem;
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        [data-testid="stMetric"] {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        [data-testid="stMetricLabel"] {
+            font-size: 0.65rem !important;
+            font-weight: 600 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.08em !important;
+        }
+
+        [data-testid="stMetricValue"] {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: var(--text-main) !important;
+        }
+
+        .stButton > button {
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.45rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: background 0.15s ease;
             box-shadow: var(--shadow-sm);
         }
 
-        button[data-baseweb="tab"] {
-            border-radius: var(--radius-sm) !important;
+        .stButton > button:hover {
+            background: var(--primary-dark);
         }
 
-        @media (max-width: 768px) {
-            .hero {
-                padding: 1.2rem;
-            }
+        .stButton > button[kind="secondary"] {
+            background: var(--surface);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        
+        .stButton > button[kind="secondary"]:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: var(--primary-50);
+        }
 
-            .hero h1 {
-                font-size: 1.55rem;
-            }
+        .stTextInput input, 
+        .stSelectbox > div,
+        .stNumberInput input {
+            border-radius: var(--radius-sm) !important;
+            border: 1px solid var(--border) !important;
+            font-size: 0.8rem !important;
+        }
 
-            .custom-card {
-                min-height: auto;
-            }
+        .stTextInput input:focus, 
+        .stSelectbox > div:focus-within,
+        .stNumberInput input:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(15, 76, 129, 0.1) !important;
+        }
 
-            .block-container {
-                padding-top: 1rem;
-            }
+        [data-testid="stSidebar"] {
+            background: #FAFBFC;
+            border-right: 1px solid var(--border);
+        }
+        
+        [data-testid="stSidebar"] .stRadio > div {
+            gap: 0.1rem;
+        }
+        
+        [data-testid="stSidebar"] .stRadio label {
+            padding: 0.4rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+        }
+        
+        [data-testid="stSidebar"] .stRadio label:hover {
+            background: #EFF6FF;
+        }
+
+        [data-testid="stTable"] {
+            border-radius: var(--radius-sm) !important;
+            overflow: hidden !important;
+            border: 1px solid var(--border) !important;
+            font-size: 0.8rem !important;
+        }
+        
+        [data-testid="stTable"] th {
+            background: #F1F5F9 !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            font-size: 0.68rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+            padding: 0.45rem 0.75rem !important;
+        }
+        
+        [data-testid="stTable"] td {
+            padding: 0.4rem 0.75rem !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+        }
+
+        .streamlit-expanderHeader {
+            background: var(--surface) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-sm) !important;
+            font-weight: 500 !important;
+            font-size: 0.82rem !important;
+        }
+        
+        .streamlit-expanderHeader:hover {
+            border-color: var(--primary) !important;
+            background: #EFF6FF !important;
+        }
+
+        .stAlert {
+            border-radius: var(--radius-sm) !important;
+            font-size: 0.8rem !important;
+        }
+
+        hr {
+            border-color: var(--border) !important;
+            margin: 1rem 0 !important;
         }
         </style>
         """,

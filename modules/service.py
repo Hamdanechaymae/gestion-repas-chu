@@ -1,240 +1,210 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-
+from io import BytesIO
 from database import (
-    ajouter_bon,
-    get_services_dict,
-    get_bons,
-    modifier_bon,
-    supprimer_bon,
-    get_stats_service,
-    get_derniers_bons,
+    get_services,
     get_chambres_by_service,
+    get_regimes,
+    ajouter_bon,
+    get_bons,
+    supprimer_bon,
+    modifier_bon,
+    get_stats_service,
+    ajouter_historique,
 )
 
-
-def section_header(title, description):
-    st.markdown(
-        f"""
-        <div class="hero" style="padding: 1.2rem 1.4rem; margin-bottom: 1rem;">
-            <h1 style="font-size: 1.5rem; margin-bottom: 0.35rem;">{title}</h1>
-            <p style="margin-bottom: 0;">{description}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def dashboard_service_page():
-    total_bons, total_normal, total_diabetique = get_stats_service()
-    total_general = total_normal + total_diabetique
-
-    section_header(
-        "Tableau de bord service",
-        "Suivi rapide des bons de repas saisis et aperçu des dernières opérations enregistrées."
-    )
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Bons", total_bons)
-    col2.metric("Repas normaux", total_normal)
-    col3.metric("Repas diabétiques", total_diabetique)
-    col4.metric("Total repas", total_general)
-
-    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    st.subheader("Derniers bons enregistrés")
-
-    derniers = get_derniers_bons()
-    if derniers:
-        df = pd.DataFrame(
-            derniers,
-            columns=["Date", "Service", "Chambre", "Normal", "Diabétique", "Statut"]
-        )
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.info("Aucun bon enregistré.")
-
+def dashboard_service():
+    service_nom = st.session_state.get('user_service', "Non specifie")
+    st.subheader(f"Tableau de bord - Service {service_nom}")
+    
+    total_bons, total_repas, en_attente = get_stats_service()
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Bons du jour", total_bons)
+    col2.metric("Total repas", total_repas)
+    col3.metric("Bons en attente", en_attente)
 
 def ajouter_bon_page():
-    section_header(
-        "Ajouter un bon de repas",
-        "Enregistrez un nouveau bon pour un service et une chambre donnés."
-    )
-
-    services = get_services_dict()
-    if not services:
-        st.warning("Aucun service disponible.")
+    st.header("Saisie d'un nouveau bon de repas")
+    
+    id_service = st.session_state.get('id_service') 
+    chambres = get_chambres_by_service(id_service)
+    
+    if not chambres:
+        st.warning("Aucune chambre enregistree pour ce service.")
         return
 
-    col_form, col_info = st.columns([1.15, 0.85], gap="large")
+    chambre_options = {f"Chambre {c[1]} ({c[2]} lit(s))": (c[0], c[2]) for c in chambres}
+    choix_chambre = st.selectbox("Chambre", list(chambre_options.keys()))
+    id_chambre, nb_patients = chambre_options[choix_chambre]
 
-    with col_form:
-        st.subheader("Saisie du bon")
+    st.info(f"Cette chambre contient {nb_patients} patient(s). Veuillez choisir le regime pour chaque patient.")
+    
+    regimes_dispo = get_regimes()
+    final_regimes_dict = {}
 
-        date_bon = st.date_input("Date", value=date.today())
-        service_nom = st.selectbox("Service", list(services.keys()))
-        id_service = services[service_nom]
-
-        chambres = get_chambres_by_service(id_service)
-        if not chambres:
-            st.warning("Aucune chambre disponible pour ce service.")
-            return
-
-        chambre_dict = {f"Chambre {c[1]}": c[0] for c in chambres}
-        chambre_choisie = st.selectbox("Chambre", list(chambre_dict.keys()))
-
-        normal = st.number_input("Repas normal", min_value=0, step=1)
-        diabetique = st.number_input("Repas diabétique", min_value=0, step=1)
-
-        if st.button("Enregistrer le bon", use_container_width=True):
-            if normal == 0 and diabetique == 0:
-                st.warning("Veuillez saisir au moins un repas.")
-            else:
-                try:
-                    ajouter_bon(
-                        str(date_bon),
-                        id_service,
-                        chambre_dict[chambre_choisie],
-                        normal,
-                        diabetique
-                    )
-                    st.success("Bon ajouté avec succès.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(str(e))
-
-    with col_info:
-        st.subheader("Résumé")
-        total = normal + diabetique
-        st.metric("Total repas", total)
-        st.info(
-            "Vérifiez le service, la chambre et les quantités avant validation."
+    for p in range(1, nb_patients + 1):
+        st.markdown(f"**Patient - Lit n.{p}**")
+        choix_regime = st.selectbox(
+            f"Regime du patient lit {p}", 
+            options=[(r[0], r[1]) for r in regimes_dispo],
+            format_func=lambda x: x[1],
+            key=f"patient_{p}_select"
         )
+        
+        id_regime = choix_regime[0]
+        final_regimes_dict[id_regime] = final_regimes_dict.get(id_regime, 0) + 1
 
+    st.markdown("---")
+    if final_regimes_dict:
+        st.write("**Recapitulatif du bon :**")
+        for id_regime, qte in final_regimes_dict.items():
+            nom_regime = next((r[1] for r in regimes_dispo if r[0] == id_regime), "Inconnu")
+            st.write(f"- {nom_regime} : {qte} repas")
 
-def mes_bons_page():
-    section_header(
-        "Mes bons de repas",
-        "Consultez l’ensemble des bons enregistrés par le service."
-    )
+    if st.button("Enregistrer le bon", type="primary"):
+        if final_regimes_dict:
+            ajouter_bon(str(date.today()), id_service, id_chambre, final_regimes_dict)
+            
+            # Enregistrer dans l'historique
+            user = st.session_state.get("user", {})
+            ajouter_historique(
+                utilisateur=user.get("nom", "Inconnu"),
+                role=user.get("role", "service"),
+                action="Creation d'un bon",
+                details=f"Service: {st.session_state.get('user_service', 'N/A')} | Chambre: {choix_chambre}"
+            )
+            
+            st.success("Bon enregistre et transmis a la cuisine.")
+        else:
+            st.error("Aucun regime selectionne.")
 
+def consultation_page():
+    st.header("Historique des bons")
     bons = get_bons()
-    if bons:
-        df = pd.DataFrame(
-            bons,
-            columns=["ID", "Date", "Service", "Chambre", "Normal", "Diabétique", "Statut"]
-        )
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.info("Aucun bon enregistré.")
-
-
-def modifier_bon_page():
-    section_header(
-        "Modifier ou supprimer un bon",
-        "Mettez à jour les informations d’un bon existant ou supprimez-le si nécessaire."
-    )
-
-    bons = get_bons()
-    services = get_services_dict()
-
     if not bons:
-        st.info("Aucun bon disponible.")
+        st.info("Aucun bon enregistre.")
         return
 
-    bon_options = {
-        f"ID {b[0]} - {b[1]} - {b[2]} - Chambre {b[3]}": b
-        for b in bons
-    }
+    df = pd.DataFrame(bons, columns=["ID", "Date", "Service", "Chambre", "Details", "Statut"])
+    
+    statuts_disponibles = ["Tous"] + sorted(df["Statut"].unique().tolist())
+    filtre_statut = st.selectbox("Filtrer par statut", statuts_disponibles)
+    
+    if filtre_statut != "Tous":
+        df = df[df["Statut"] == filtre_statut]
+    
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
-    choix = st.selectbox("Choisir un bon", list(bon_options.keys()))
-    bon = bon_options[choix]
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_exp, col_supp = st.columns(2)
+    
+    with col_exp:
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Bons_Repas')
+        excel_data = output.getvalue()
+        
+        st.download_button(
+            label="Exporter en Excel",
+            data=excel_data,
+            file_name=f"bons_repas_{date.today()}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
 
-    id_bon = bon[0]
-    date_actuelle = pd.to_datetime(bon[1]).date()
-    service_actuel = bon[2]
-    chambre_actuelle = bon[3]
-    normal_actuel = bon[4]
-    diabetique_actuel = bon[5]
-    statut_actuel = bon[6]
-
-    col_form, col_side = st.columns([1.15, 0.85], gap="large")
-
-    with col_form:
-        st.subheader("Mise à jour du bon")
-
-        nouvelle_date = st.date_input("Date", value=date_actuelle)
-
-        services_noms = list(services.keys())
-        index_service = services_noms.index(service_actuel) if service_actuel in services_noms else 0
-        nouveau_service = st.selectbox("Service", services_noms, index=index_service)
-        id_service = services[nouveau_service]
-
-        chambres = get_chambres_by_service(id_service)
-        if not chambres:
-            st.warning("Aucune chambre disponible pour ce service.")
-            return
-
-        chambre_dict = {f"Chambre {c[1]}": c[0] for c in chambres}
-        chambre_labels = list(chambre_dict.keys())
-        default_chambre = f"Chambre {chambre_actuelle}"
-        index_chambre = chambre_labels.index(default_chambre) if default_chambre in chambre_labels else 0
-
-        chambre_choisie = st.selectbox("Chambre", chambre_labels, index=index_chambre)
-
-        nouveau_normal = st.number_input("Repas normal", min_value=0, value=int(normal_actuel))
-        nouveau_diabetique = st.number_input("Repas diabétique", min_value=0, value=int(diabetique_actuel))
-
-        col_btn1, col_btn2 = st.columns(2)
-
-        with col_btn1:
-            if st.button("Enregistrer les modifications", use_container_width=True):
-                if nouveau_normal == 0 and nouveau_diabetique == 0:
-                    st.warning("Veuillez saisir au moins un repas.")
-                else:
-                    try:
-                        modifier_bon(
-                            id_bon,
-                            str(nouvelle_date),
-                            id_service,
-                            chambre_dict[chambre_choisie],
-                            nouveau_normal,
-                            nouveau_diabetique
-                        )
-                        st.success("Bon modifié avec succès.")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(str(e))
-
-        with col_btn2:
-            if st.button("Supprimer le bon", use_container_width=True):
-                supprimer_bon(id_bon)
-                st.warning("Bon supprimé.")
+    with col_supp:
+        with st.expander("Supprimer un bon"):
+            bon_dict = {f"Bon n.{b[0]} - {b[2]} - Chambre {b[3]}": b[0] for b in bons}
+            bon_choisi = st.selectbox("Selectionnez le bon a supprimer", list(bon_dict.keys()))
+            confirmation = st.checkbox("Je confirme la suppression de ce bon")
+            if st.button("Confirmer la suppression", key="delete_bon", disabled=not confirmation):
+                supprimer_bon(bon_dict[bon_choisi])
+                
+                # Enregistrer dans l'historique
+                user = st.session_state.get("user", {})
+                ajouter_historique(
+                    utilisateur=user.get("nom", "Inconnu"),
+                    role=user.get("role", "service"),
+                    action="Suppression d'un bon",
+                    details=f"Bon supprime: {bon_choisi}"
+                )
+                
+                st.toast("Bon supprime.")
                 st.rerun()
 
-    with col_side:
-        st.subheader("Informations actuelles")
-        st.write(f"**Statut :** {statut_actuel}")
-        st.metric("Total actuel", int(normal_actuel) + int(diabetique_actuel))
-        st.info(
-            "La suppression doit être utilisée seulement en cas d’erreur de saisie ou d’annulation."
-        )
+def modification_page():
+    st.header("Modification d'un bon")
+    
+    bons = get_bons()
+    if not bons:
+        st.info("Aucun bon a modifier.")
+        return
 
+    bon_dict = {f"Bon n.{b[0]} - {b[2]} - Chambre {b[3]} - {b[4]}": b[0] for b in bons}
+    bon_choisi = st.selectbox("Selectionnez le bon a modifier", list(bon_dict.keys()))
+    id_bon = bon_dict[bon_choisi]
+
+    id_service = st.session_state.get('id_service')
+    chambres = get_chambres_by_service(id_service)
+    if not chambres:
+        st.warning("Aucune chambre disponible.")
+        return
+
+    chambre_options = {f"Chambre {c[1]} ({c[2]} lit(s))": (c[0], c[2]) for c in chambres}
+    nouvelle_chambre = st.selectbox("Nouvelle chambre", list(chambre_options.keys()))
+    id_chambre, nb_patients = chambre_options[nouvelle_chambre]
+
+    st.info(f"Cette chambre contient {nb_patients} patient(s).")
+    
+    regimes_dispo = get_regimes()
+    final_regimes_dict = {}
+
+    for p in range(1, nb_patients + 1):
+        st.markdown(f"**Patient - Lit n.{p}**")
+        choix_regime = st.selectbox(
+            f"Regime du patient lit {p}", 
+            options=[(r[0], r[1]) for r in regimes_dispo],
+            format_func=lambda x: x[1],
+            key=f"modif_patient_{p}_select"
+        )
+        
+        id_regime = choix_regime[0]
+        final_regimes_dict[id_regime] = final_regimes_dict.get(id_regime, 0) + 1
+
+    if st.button("Enregistrer les modifications", type="primary"):
+        if final_regimes_dict:
+            modifier_bon(id_bon, id_chambre, final_regimes_dict)
+            
+            # Enregistrer dans l'historique
+            user = st.session_state.get("user", {})
+            ajouter_historique(
+                utilisateur=user.get("nom", "Inconnu"),
+                role=user.get("role", "service"),
+                action="Modification d'un bon",
+                details=f"Bon modifie: {bon_choisi} | Nouvelle chambre: {nouvelle_chambre}"
+            )
+            
+            st.success("Bon modifie avec succes.")
+            st.rerun()
+        else:
+            st.error("Aucun regime selectionne.")
 
 def service_page():
-    st.sidebar.markdown("## Service hospitalier")
-    menu = st.sidebar.radio(
-        "Fonctionnalités Service",
-        ["Dashboard", "Ajouter un bon", "Mes bons", "Modifier un bon"],
-        key="menu_service",
-        label_visibility="collapsed"
-    )
+    st.sidebar.title("Navigation Service")
+    menu = st.sidebar.radio("Menu", [
+        "Tableau de bord", 
+        "Ajouter un bon", 
+        "Consulter les bons", 
+        "Modifier un bon"
+    ])
 
-    if menu == "Dashboard":
-        dashboard_service_page()
+    if menu == "Tableau de bord":
+        dashboard_service()
     elif menu == "Ajouter un bon":
         ajouter_bon_page()
-    elif menu == "Mes bons":
-        mes_bons_page()
+    elif menu == "Consulter les bons":
+        consultation_page()
     elif menu == "Modifier un bon":
-        modifier_bon_page()
+        modification_page()
